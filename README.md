@@ -42,3 +42,27 @@ macOS may ask for your password when running with sudo. This is normal.
 Do not run as root unnecessarily—only use sudo for starting the app.
 
 All VM files will be created under your user directory (or the paths you configure), but elevated privileges are required for proper file creation.
+
+
+
+
+
+Redirecting the VMs Folder to the Project Root (note)
+
+By default, QVM creates the VMs folder inside the app bundle (qemugui.app/Contents/Resources/VMs). To make it easier to find and manage your virtual machines, you can redirect this folder to the VMs folder in the root of the project you downloaded.
+
+Steps:
+
+Open Terminal.
+
+Navigate to the Resources folder inside the app bundle:
+
+cd /path/to/QVM/qemugui.app/Contents/Resources
+
+Create a symbolic link pointing to the project root VMs folder:
+
+ln -s /path/to/QVM/VMs VMs
+
+Replace /path/to/QVM with the full path to your project folder.
+
+After this, whenever QVM tries to create or access a VM in Resources/VMs, it will automatically read/write from the VMs folder in your project root.
