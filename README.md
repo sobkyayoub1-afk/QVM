@@ -20,3 +20,25 @@ Open the app and start managing your virtual machines immediately
 
 License:
 MIT License – free and open source for personal and commercial use
+
+
+
+
+
+⚠️ Permissions Note
+
+QVM needs to run with administrator privileges (sudo) to create and manage QEMU virtual machine files.
+
+To launch QVM properly, open Terminal and run:
+
+sudo /Applications/QVM.app/Contents/MacOS/qemugui
+
+(adjust path if you placed the app elsewhere)
+
+Running without sudo may result in permission errors when creating VMs or saving VM configurations.
+
+macOS may ask for your password when running with sudo. This is normal.
+
+Do not run as root unnecessarily—only use sudo for starting the app.
+
+All VM files will be created under your user directory (or the paths you configure), but elevated privileges are required for proper file creation.
