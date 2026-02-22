@@ -5,13 +5,30 @@ import json
 import tkinter as tk
 from tkinter import simpledialog, messagebox, filedialog
 
-# Base directory for VMs
-BASE_DIR = os.path.join(os.getcwd(), "VMs")
+# ------------------------------------------------------------------
+# CRITICAL FIX: Force working directory to script location
+# This ensures relative paths work when launched from Finder
+# ------------------------------------------------------------------
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+os.chdir(SCRIPT_DIR)
+
+# Base directory for VMs (now stable no matter how app is launched)
+BASE_DIR = os.path.join(SCRIPT_DIR, "VMs")
 os.makedirs(BASE_DIR, exist_ok=True)
 
-# QEMU binary path
+# QEMU binary paths (Homebrew)
 QEMU_BIN = "/opt/homebrew/bin/qemu-system-x86_64"
 QEMU_IMG = "/opt/homebrew/bin/qemu-img"
+
+# Verify QEMU exists at startup
+if not os.path.exists(QEMU_BIN):
+    messagebox.showerror("QEMU Not Found", f"QEMU binary not found at:\n{QEMU_BIN}")
+    raise SystemExit
+
+if not os.path.exists(QEMU_IMG):
+    messagebox.showerror("QEMU-IMG Not Found", f"QEMU-IMG binary not found at:\n{QEMU_IMG}")
+    raise SystemExit
+
 
 # Load existing VM config
 def load_vm_config(vm_name):
@@ -21,6 +38,7 @@ def load_vm_config(vm_name):
             return json.load(f)
     return None
 
+
 # Save VM config
 def save_vm_config(vm_name, config):
     vm_path = os.path.join(BASE_DIR, vm_name)
@@ -28,6 +46,7 @@ def save_vm_config(vm_name, config):
     cfg_path = os.path.join(vm_path, "config.json")
     with open(cfg_path, "w") as f:
         json.dump(config, f, indent=2)
+
 
 # Create a new VM
 def create_vm():
@@ -42,16 +61,20 @@ def create_vm():
     # User options
     ram_mb = simpledialog.askinteger("RAM", "Enter RAM in MB:", minvalue=512, maxvalue=65536)
     cpu_cores = simpledialog.askinteger("CPU", "Enter number of CPU cores:", minvalue=1, maxvalue=32)
-    disk_mb = simpledialog.askinteger("Disk", "Enter disk size in MB:", minvalue=512, maxvalue=1048576)  # 1 TB max
+    disk_mb = simpledialog.askinteger("Disk", "Enter disk size in MB:", minvalue=512, maxvalue=1048576)
     iso_path = filedialog.askopenfilename(title="Select Boot ISO", filetypes=[("ISO Files", "*.iso")])
     machine_type = simpledialog.askstring("Machine Type", "Enter machine type (e.g., q35, pc):", initialvalue="q35")
     accel = simpledialog.askstring("Acceleration", "Enter accelerator (tcg recommended on mac):", initialvalue="tcg")
 
     # Create QCOW2 disk
     if not os.path.exists(disk_path):
-        subprocess.run([
-            QEMU_IMG, "create", "-f", "qcow2", disk_path, f"{disk_mb}M"
-        ], check=True)
+        try:
+            subprocess.run([
+                QEMU_IMG, "create", "-f", "qcow2", disk_path, f"{disk_mb}M"
+            ], check=True)
+        except Exception as e:
+            messagebox.showerror("Disk Creation Error", str(e))
+            return
 
     # Save config
     config = {
@@ -65,9 +88,13 @@ def create_vm():
     save_vm_config(vm_name, config)
     messagebox.showinfo("VM Created", f"VM '{vm_name}' configuration saved!")
 
+
 # Start a VM
 def start_vm():
     vm_name = simpledialog.askstring("VM Name", "Enter VM name to start:")
+    if not vm_name:
+        return
+
     config = load_vm_config(vm_name)
     if not config:
         messagebox.showerror("Error", f"No config found for VM '{vm_name}'")
@@ -94,7 +121,13 @@ def start_vm():
     else:
         qemu_cmd += ["-boot", "c"]
 
-    subprocess.run(qemu_cmd)
+    try:
+        subprocess.run(qemu_cmd, check=True)
+    except subprocess.CalledProcessError as e:
+        messagebox.showerror("QEMU Error", f"QEMU exited with error:\n{e}")
+    except FileNotFoundError:
+        messagebox.showerror("QEMU Error", "QEMU binary not found.")
+
 
 # Tkinter UI
 root = tk.Tk()
