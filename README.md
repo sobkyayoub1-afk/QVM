@@ -29,9 +29,7 @@ MIT License – free and open source for personal and commercial use
 
 QVM needs to run with administrator privileges (sudo) to create and manage QEMU virtual machine files.
 
-To launch QVM properly, open Terminal and run:
 
-sudo /Applications/QVM.app/Contents/MacOS/qemugui
 
 (adjust path if you placed the app elsewhere)
 
